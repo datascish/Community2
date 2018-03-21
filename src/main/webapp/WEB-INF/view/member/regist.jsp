@@ -17,8 +17,20 @@
 		$("#email").keyup(function() {
 			var value = $(this).val();
 			if (value != "") {
-				$(this).removeClass("invalid");
-				$(this).addClass("valid");
+				 // Ajax Call (http://localhost:8080/Community/api/exists/email)
+				 $.post("<c:url value="/api/exists/email"/>", { // 비동기 방식
+					 email: value
+				 }, function(response) {
+					 console.log(response.response);
+					 if (response.response) {
+						 $("#email").removeClass("valid");
+						 $("#email").addClass("invalid");
+					 }
+					 else {
+						 $("#email").removeClass("invalid");
+						 $("#email").addClass("valid");
+					 }
+				 });
 			}
 			else {
 				$(this).addClass("invalid");
@@ -29,8 +41,19 @@
 		$("#nickname").keyup(function() {
 			var value = $(this).val();
 			if (value != "") {
-				$(this).removeClass("invalid");
-				$(this).addClass("valid");
+				$.post("<c:url value="/api/exists/nickname"/>", {
+					nickname: value
+				}, function(response) {
+					console.log(response.response);
+					if (response.response) {
+						$("#nickname").removeClass("valid");
+						$("#nickname").addClass("invalid");
+					}
+					else {
+						$("#nickname").removeClass("invalid");
+						$("#nickname").addClass("valid");
+					}
+				});
 			}
 			else {
 				$(this).addClass("invalid");
@@ -74,23 +97,61 @@
 				return false;
 			}
 			
-			if ($("#nickname").val() == "") {
-				alert("닉네임을 입력하세요!");
-				$("#nickname").focus();
-				$("#nickname").addClass("invalid");
+			if ($("#email").hasClass("invalid")) {
+				alert("작성한 이메일은 사용할 수 없습니다.");
+				$("#email").focus();
 				return false;
 			}
-			
-			if ($("#password").val() == "") {
-				alert("비밀번호를 입력하세요!");
-				$("#password").focus();
-				$("#password").addClass("invalid");
-				return false;
+			else {
+				// 한 번 더 체크 - 비동기 -> 동기
+				 $.post("<c:url value="/api/exists/email"/>", {
+					 email: $("#email").val()
+				 }, function(response) {
+					 if (response.response) {
+						 alert("작성한 이메일은 사용할 수 없습니다.");
+						 $("#email").focus();
+						 return false;
+					 }
+					 if ($("#nickname").val() == "") {
+							alert("닉네임을 입력하세요!");
+							$("#nickname").focus();
+							$("#nickname").addClass("invalid");
+							return false;
+						}
+					 	if ($("#nickname").hasClass("invalid")) {
+					 		alert("작성한 닉네임은 사용할 수 없습니다.");
+					 		$("#nickname").focus();
+					 		return false;
+					 	}
+					 	else {
+					 		$.post("<c:url value="/api/exists/nickname"/>", {
+								nickname: $("#nickname").val()
+							}, function(response) {
+								console.log(response.response);
+								if (response.response) {
+									$("#nickname").removeClass("valid");
+									$("#nickname").addClass("invalid");
+								}
+								else {
+									if ($("#password").val() == "") {
+										alert("비밀번호를 입력하세요!");
+										$("#password").focus();
+										$("#password").addClass("invalid");
+										return false;
+									}
+									$("#registForm").attr({
+										"method": "post",
+										"action": "<c:url value="/regist"/>"
+								    }).submit();
+								}
+							});
+					 	}
+						
+						
+					
+				 });
+
 			}
-			$("#registForm").attr({
-				"method": "post",
-				"action": "<c:url value="/regist"/>"
-				}).submit();
 		});
 	});
 </script>
@@ -110,7 +171,7 @@
 			</div>
 			
 			<div>
-				<%-- TODO Nickname 중복검사 하기 (ajax) --%>
+				
 				<input type="text" id="nickname" 
 						name="nickname" placeholder="Nickname" 
 						value="${registForm.nickname}"/>
