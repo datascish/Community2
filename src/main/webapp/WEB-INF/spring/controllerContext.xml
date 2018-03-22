@@ -18,4 +18,9 @@
 		<property name="memberService" ref="memberService"></property>
 		<property name="communityService" ref="communityService"></property>
 	</bean>
+	
+	<bean id="replyController"
+			class="com.ktds.reply.web.ReplyController">
+		<property name="replyService" ref="replyService"></property>
+	</bean>
 </beans>

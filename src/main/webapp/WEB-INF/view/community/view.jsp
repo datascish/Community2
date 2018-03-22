@@ -6,6 +6,20 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>${community.title}</title>
+<script src="<c:url value="/static/js/jquery-3.3.1.min.js"/>" 
+		type="text/javascript"></script>
+<script type="text/javascript">
+	$().ready(function() {
+		$("#writeReplyBtn").click(function() {
+			$.post("<c:url value="/api/reply/${community.id}" />",
+					$("#writeReplyForm").serialize(), 
+					function(response) {
+						alert("등록됨");
+						console.log(response);
+			});
+		});
+	});
+</script>
 </head>
 <body>
 	<div id="wrapper">
@@ -26,12 +40,24 @@
 			<p>${community.viewCount}	| ${community.recommendCount} | ${community.writeDate}</p>
 			<p></p>
 			<c:if test="${not empty community.displayFilename}">
-			<p><a href="<c:url value="/get/${community.id}"/>">${community.displayFilename}</a></p>
+				<p><a href="<c:url value="/get/${community.id}"/>">${community.displayFilename}</a></p>
 			</c:if>
 			<p>
 				${community.body}
 			</p>
-	
+			<hr />
+			<div id="replies"></div>
+			<div id="createReply">
+				<form id="writeReplyForm">
+					<input type="hidden" id="parentReplyId" name="parentReplyId" value="0 " />
+					<div>
+						<textarea id="body" name="body"></textarea>
+					</div>
+					<div>
+						<input type="button" id="writeReplyBtn" value="등록" />
+					</div>
+				</form>
+			</div>
 			<a href="<c:url value="/"/>">뒤로</a>
 			<a href="<c:url value="/recommend/${community.id}"/>">추천하기</a>
 			<c:if test="${sessionScope.__USER__.id == community.memberVO.id}">
