@@ -14,10 +14,16 @@ public class ReplyDaoImplForOracle extends SqlSessionDaoSupport implements Reply
 	}
 	
 	@Override
+	public ReplyVO selectOneReply(int replyId) {
+		return getSqlSession().selectOne("ReplyDao.selectOneReply", replyId);
+	}
+	
+	@Override
 	public int insertReply(ReplyVO replyVO) {
 		int sequence = getSqlSession().selectOne("ReplyDao.nextValue"); // query로 sequence 가져오기
 		replyVO.setId(sequence); // sequence 값을 할당
 		return getSqlSession().insert("ReplyDao.insertReply", replyVO);
 	}
+	
 	
 }

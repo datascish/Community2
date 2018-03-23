@@ -2,11 +2,14 @@ package com.ktds.community.dao;
 
 import java.util.List;
 
+import com.ktds.community.vo.CommunitySearchVO;
 import com.ktds.community.vo.CommunityVO;
 
 public interface CommunityDao {
+	
+	public int selectCountAll(CommunitySearchVO communitySearchVO);
 	// 전체 게시글의 목록 가져와서 보여주기
-	public List<CommunityVO> selectAll();
+	public List<CommunityVO> selectAll(CommunitySearchVO communitySearchVO);
 	
 	public CommunityVO selectOne(int id);
 	

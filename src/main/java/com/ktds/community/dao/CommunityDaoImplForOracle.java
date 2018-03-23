@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.mybatis.spring.support.SqlSessionDaoSupport;
 
+import com.ktds.community.vo.CommunitySearchVO;
 import com.ktds.community.vo.CommunityVO;
 
 public class CommunityDaoImplForOracle extends SqlSessionDaoSupport implements CommunityDao{
@@ -13,10 +14,15 @@ public class CommunityDaoImplForOracle extends SqlSessionDaoSupport implements C
 	 * SqlSessionDaoSupport
 	 * sqlSessionTemplate Bean 객체를 가지고 있음
 	 */
-
+	
 	@Override
-	public List<CommunityVO> selectAll() {
-		return getSqlSession().selectList("CommunityDao.selectAll"); // interface.method <-- copy&paste
+	public int selectCountAll(CommunitySearchVO communitySearchVO) {
+		return getSqlSession().selectOne("CommunityDao.selectCountAll", communitySearchVO);
+	}
+	
+	@Override
+	public List<CommunityVO> selectAll(CommunitySearchVO communitySearchVO) {
+		return getSqlSession().selectList("CommunityDao.selectAll", communitySearchVO); // interface.method <-- copy&paste
 	}
 	
 	@Override
