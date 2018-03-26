@@ -26,7 +26,7 @@
 		</c:if>
 		
 		<li style="display:inline-block;">
-			<a href="<c:url value="/community" />">Community</a>
+			<a href="<c:url value="/community/rest" />">Community</a>
 		</li>
 	</ul>
 </div>

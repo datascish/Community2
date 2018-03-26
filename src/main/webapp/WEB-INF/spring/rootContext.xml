@@ -16,6 +16,13 @@
 		<property name="password" value="community" />
 	</bean>
 	
+	<bean id="mysqlDataSource"
+			class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="driverClassName" value="com.mysql.jdbc.Driver" />
+		<property name="url" value="jdbc:mysql://localhost:3306/sys" />
+		<property name="username" value="history" />
+		<property name="password" value="history" />
+	</bean>
 	<!-- MyBatis 설정 -->
 	<!-- MyBatis가 DB에 접속할 수 있도록 도와주는 설정 -->
 	<bean id="sqlSessionFactory"

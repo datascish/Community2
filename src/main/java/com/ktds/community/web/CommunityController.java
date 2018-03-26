@@ -34,14 +34,37 @@ public class CommunityController {
 	public void setCommunityService(CommunityService communityService) {
 		this.communityService = communityService;
 	}
+	
+	@RequestMapping("/reset")
+	public String viewInitListPage(HttpSession session) {
+		session.removeAttribute("__SEARCH__");
+		return "redirect:/";
+	}
 
 	@RequestMapping("/") // 제일 첫 화면이 list page
 	// String은 jsp(페이지 화면)만, ModelAndView는 jsp(페이지 화면) + data
-	public ModelAndView viewListPage(CommunitySearchVO communitySearchVO) {
+	public ModelAndView viewListPage(CommunitySearchVO communitySearchVO, HttpSession session) {
+		
+		// 데이터가 안넘어왔을 경우
+		// 1. 리스트페이지에 처음 접근했을 때
+		// 2. 글 내용을 보고, 목록보기 링크를 클릭했을 때
+		if (communitySearchVO.getPageNo() < 0) {
+			// Session에 저장된 CommunitySearchVO를 가져옴
+			 communitySearchVO = (CommunitySearchVO) session.getAttribute("__SEARCH__");
+			// Session에 저장된 CommunitySearchVO가 없을 경우 , pageNo = 0으로 초기화
+			 if (communitySearchVO == null) {
+				 communitySearchVO = new CommunitySearchVO();
+				 communitySearchVO.setPageNo(0);
+			 }
+		}
+		
+		session.setAttribute("__SEARCH__", communitySearchVO);
 		
 		ModelAndView view = new ModelAndView();
 		// /WEB-INF/view/community/list.jsp
 		view.setViewName("community/list");
+		
+		view.addObject("search", communitySearchVO); // 어떤 검색을 했는지 알려줌
 
 		PageExplorer pageExplorer = communityService.getAll(communitySearchVO);
 		view.addObject("pageExplorer", pageExplorer);
@@ -79,7 +102,7 @@ public class CommunityController {
 		boolean isSuccess = communityService.createCommunity(communityVO);
 
 		if (isSuccess) {
-			return new ModelAndView("redirect:/"); // 이 url(/ : list page)로 이동해라
+			return new ModelAndView("redirect:/reset"); // 글쓰기를 완료하면 /reset으로 이동
 		}
 		return new ModelAndView("redirect:/write");
 	}

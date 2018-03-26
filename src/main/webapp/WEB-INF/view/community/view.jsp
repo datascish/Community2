@@ -122,6 +122,7 @@
 			<a href="<c:url value="/recommend/${community.id}"/>">추천하기</a>
 			<c:if test="${sessionScope.__USER__.id == community.memberVO.id}">
 				<a href="<c:url value="/modify/${community.id}"/>">수정하기</a>
+				<a href="<c:url value="/"/>"> 목록으로 </a>
 				<a href="<c:url value="/remove/${community.id}"/>">게시글 삭제</a>
 			</c:if>
 	</div>
