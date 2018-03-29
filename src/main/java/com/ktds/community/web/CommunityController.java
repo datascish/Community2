@@ -13,10 +13,14 @@ import org.springframework.stereotype.Controller;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.servlet.ModelAndView;
 
+import com.ktds.actionhistory.vo.ActionHistory;
+import com.ktds.actionhistory.vo.ActionHistoryVO;
 import com.ktds.community.service.CommunityService;
 import com.ktds.community.vo.CommunitySearchVO;
 import com.ktds.community.vo.CommunityVO;
@@ -130,7 +134,12 @@ public class CommunityController {
 	}
 
 	@RequestMapping("/recommend/{id}")
-	public String viewRecommendCount(@PathVariable int id) {
+	public String viewRecommendCount(@PathVariable int id,
+					@RequestAttribute ActionHistoryVO actionHistory) {
+		
+		actionHistory.setReqType(ActionHistory.ReqType.COMMUNITY);
+		String log = String.format(ActionHistory.LOG.RECOMMEND, id);
+		actionHistory.setLog(log);
 		
 		// TODO 추천수 증가
 		if (communityService.incrementRecommendCount(id)) {
@@ -140,11 +149,17 @@ public class CommunityController {
 	}
 	
 	@RequestMapping("/get/{id}")
-	public void download(@PathVariable int id, HttpServletRequest request, HttpServletResponse response) {
+	public void download(@PathVariable int id, HttpServletRequest request, 
+								HttpServletResponse response, @RequestAttribute ActionHistoryVO actionHistory) {
+		
 		// return type이 void라도 response 보낼 수 있음
 		// 게시글의 id를 가져와서 그 게시글에 있는 파일 이름을 가져올 것
 		CommunityVO community = communityService.getOne(id);
 		String filename = community.getDisplayFilename();
+		
+		actionHistory.setReqType(ActionHistory.ReqType.COMMUNITY);
+		String log = String.format(ActionHistory.LOG.DOWNLOAD, id, filename);
+		actionHistory.setLog(log);
 		
 		DownloadUtil download = new DownloadUtil("d:/uploadFiles/" + filename );
 		try {
@@ -155,12 +170,17 @@ public class CommunityController {
 	}
 	
 	@RequestMapping("/remove/{id}")
-	public String removeCommunity(@PathVariable int id, HttpSession session) {
+	public String removeCommunity(@PathVariable int id, HttpSession session,
+						@RequestAttribute ActionHistoryVO actionHistory) {
 		
 		MemberVO member = (MemberVO) session.getAttribute(Member.USER); // 명시적 형변환 필요
 		CommunityVO community = communityService.getOne(id); // 삭제하고자 하는 게시글의 정보를 가져오기
 		boolean isMyCommunity = member.getId() == community.getUserId(); // 내가 쓴 게시글인지 확인
-
+		
+		actionHistory.setReqType(ActionHistory.ReqType.COMMUNITY);
+		String log = String.format(ActionHistory.LOG.DELETE, id, community.getTitle(), community.getBody());
+		actionHistory.setLog(log);
+		
 		//boolean isdelete = communityService.removeCommunity(id);
 		
 		if (isMyCommunity && communityService.removeCommunity(id)) {
@@ -188,9 +208,10 @@ public class CommunityController {
 	
 	@RequestMapping(value="/modify/{id}", method=RequestMethod.POST)
 	public String doModifyAction(@PathVariable int id, HttpSession session, @ModelAttribute("writeForm") 
-										@Valid CommunityVO communityVO, Errors errors, HttpServletRequest request) {
+										@Valid CommunityVO communityVO, Errors errors, HttpServletRequest request
+										, @SessionAttribute("__USER__") MemberVO member, @RequestAttribute ActionHistoryVO actionHistory) {
 		// 원본 글이 자신이 쓴 게 맞는지 체크
-		MemberVO member = (MemberVO) session.getAttribute(Member.USER);
+		// MemberVO member = (MemberVO) session.getAttribute(Member.USER);
 		CommunityVO originalVO = communityService.getOne(id);
 		
 		if (member.getId() != originalVO.getUserId() ) {
@@ -216,21 +237,30 @@ public class CommunityController {
 		
 		boolean isModify = false;
 		
+		String asIs = "";
+		String toBe = "";
+		
 		// 1. IP 변경 확인
 		String ip = request.getRemoteAddr();
 		if ( !ip.equals(originalVO.getRequestIp()) ) {
 			newCommunity.setRequestIp(ip);
 			isModify = true;
+			asIs += "IP : " + originalVO.getRequestIp() + "<br/>";
+			toBe += "IP : " + ip + "<br/>";
 		}
 		// 2. 제목 변경 확인
 		if ( !originalVO.getTitle().equals(communityVO.getTitle()) ) {
 			newCommunity.setTitle(communityVO.getTitle());
 			isModify = true;
+			asIs += "Title : " + originalVO.getTitle() + "<br/>";
+			toBe += "Title : " + communityVO.getTitle() + "<br/>";
 		}
 		// 3. 내용 변경 확인
 		if ( !originalVO.getBody().equals(communityVO.getBody()) ) {
 			newCommunity.setBody(communityVO.getBody());
 			isModify = true;
+			asIs += "Body : " + originalVO.getBody() + "<br/>";
+			toBe += "Body : " + communityVO.getBody() + "<br/>";
 		}
 		// 4. 파일 변경 확인
 		if (communityVO.getDisplayFilename().length() > 0) { // check가 되어 있을 경우
@@ -245,9 +275,18 @@ public class CommunityController {
 		if ( !originalVO.getDisplayFilename().equals(communityVO.getDisplayFilename()) ) {
 			newCommunity.setDisplayFilename(communityVO.getDisplayFilename());
 			isModify = true;
+			asIs += "File : " + originalVO.getDisplayFilename() + "<br/>";
+			toBe += "File : " + communityVO.getDisplayFilename() + "<br/>";
 		}
+		actionHistory.setReqType(ActionHistory.ReqType.COMMUNITY);
+		String log = String.format(ActionHistory.LOG.UPDATE, originalVO.getTitle(), originalVO.getBody());
+		actionHistory.setLog(log);
+		actionHistory.setAsIs(asIs);
+		actionHistory.setToBe(toBe);
 		// 5. 변경 X 확인
 		if (isModify) {
+			// AS_IS, TO_BE
+			
 			// 6. UPDATE 하는 Service code 호출
 			communityService.updateCommunity(newCommunity); // 수정한 정보를 저장한 객체 받아오기
 		}

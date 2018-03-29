@@ -9,15 +9,20 @@ import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
 
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
+import com.ktds.actionhistory.service.ActionHistoryService;
+import com.ktds.actionhistory.vo.ActionHistory;
+import com.ktds.actionhistory.vo.ActionHistoryVO;
 import com.ktds.community.service.CommunityService;
 import com.ktds.member.constants.Member;
 import com.ktds.member.service.MemberService;
@@ -66,9 +71,16 @@ public class MemberController {
 	}
 	
 	@RequestMapping(value="/login", method=RequestMethod.POST)
-	public String doLoginAction (MemberVO memberVO, Errors errors, HttpServletRequest request) {
+	public String doLoginAction (MemberVO memberVO, Errors errors, 
+										HttpSession session, @RequestAttribute ActionHistoryVO actionHistory) {
 		
-		HttpSession session = request.getSession(); // request 객체에서 session을 꺼내오는 방법
+		// session = request.getSession(); // request 객체에서 session을 꺼내오는 방법
+		actionHistory.setReqType(ActionHistory.ReqType.MEMBER);
+		
+		String log = String.format(ActionHistory.LOG.LOGIN, memberVO.getEmail());
+		actionHistory.setLog(log);
+		//model.addAttribute("actionHistory", history);
+		
 		// id를 누락했거나(id x) id를 안 적었을 경우(id o)를 check
 //		if (errors.hasErrors()) {
 //			ModelAndView view = new ModelAndView();
@@ -103,18 +115,45 @@ public class MemberController {
 		return "member/regist";
 	}
 	@RequestMapping(value="/regist", method=RequestMethod.POST)
-	public ModelAndView doRegistAction(@ModelAttribute("registForm") @Valid MemberVO memberVO, Errors errors) {
+	public ModelAndView doRegistAction(@ModelAttribute("registForm") @Valid MemberVO memberVO, 
+												Errors errors, @RequestAttribute ActionHistoryVO actionHistory) {
 		if ( errors.hasErrors()) {
 			return new ModelAndView("member/regist");
 		}
+		
+		actionHistory.setReqType(ActionHistory.ReqType.MEMBER);
+		
 		if (memberService.createMember(memberVO)) {
+			// Regist : Email(%s), Nickname(%s), Result(%s)
+			String log = String.format(ActionHistory.LOG.REGIST, memberVO.getEmail(), 
+											memberVO.getNickname(), "true");
+			actionHistory.setLog(log);
+			// model.addAttribute("actionHistory", history);
 			return new ModelAndView("redirect:/login");
 		}
+		// Regist : Email(%s), Nickname(%s), Result(%s)
+		String log = String.format(ActionHistory.LOG.REGIST, memberVO.getEmail(), 
+				memberVO.getNickname(), "false");
+		actionHistory.setLog(log);
+		// model.addAttribute("actionHistory", history);
 		return new ModelAndView("redirect:/login");
 	}
 	@RequestMapping("/logout")
-	public String doLogoutAction(HttpSession session) {
+	public String doLogoutAction(HttpSession session, 
+										@RequestAttribute ActionHistoryVO actionHistory) {
 		
+		// session = request.getSession();
+		// session에서 member 정보 가져오기 - id 값 받아오기 위해
+		MemberVO member = (MemberVO) session.getAttribute(Member.USER); 
+		
+		// ActionHistoryVO history = (ActionHistoryVO) request.getAttribute("actionHistory");
+		actionHistory.setReqType(ActionHistory.ReqType.MEMBER);
+		//history.setReqType(ActionHistory.ReqType.MEMBER);
+		
+		String log = String.format(ActionHistory.LOG.LOGOUT, member.getEmail());
+		//history.setLog(log);
+		//model.addAttribute("actionHistory", history);
+		actionHistory.setLog(log);
 		// 세션 소멸 - 세션 전체를 다 제거
 		session.invalidate();
 		return "redirect:/login";

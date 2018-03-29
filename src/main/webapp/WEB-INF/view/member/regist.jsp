@@ -17,7 +17,7 @@
 		$("#email").keyup(function() {
 			var value = $(this).val();
 			if (value != "") {
-				 // Ajax Call (http://localhost:8080/Community/api/exists/email)
+				 // Ajax Call (http://localhost:8080/api/exists/email)
 				 $.post("<c:url value="/api/exists/email"/>", { // 비동기 방식
 					 email: value
 				 }, function(response) {
@@ -146,9 +146,6 @@
 								}
 							});
 					 	}
-						
-						
-					
 				 });
 
 			}

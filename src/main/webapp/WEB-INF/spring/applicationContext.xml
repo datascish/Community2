@@ -14,6 +14,14 @@
 	<mvc:resources mapping="/static/**"  location="/WEB-INF/static/" ></mvc:resources>
 	<mvc:interceptors>
 		<mvc:interceptor>
+			<mvc:mapping path="/**"/>
+			<mvc:exclude-mapping path="/static/**"/>
+			<bean id="passInterceptor"
+					class="com.ktds.interceptors.PassInterceptor">
+				<property name="actionHistoryService" ref="actionHistoryService"></property>
+			</bean>
+		</mvc:interceptor>
+		<mvc:interceptor>
 			<mvc:mapping path="/**" />
 			<mvc:exclude-mapping path="/login" />
 			<mvc:exclude-mapping path="/regist" />
